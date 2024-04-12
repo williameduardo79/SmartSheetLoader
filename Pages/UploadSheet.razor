@@ -1,0 +1,74 @@
+﻿@page "/upload"
+@using Microsoft.AspNetCore.Components.Forms
+@using System.IO
+@using SmartSheetLoader.Models
+@using SmartSheetLoader.Services
+@inject ISmartsheetClient SSC
+@inject NavigationManager NavManager
+<h3>Upload Sheet</h3>
+
+<EditForm Model="@uploadFormModel" Context="formContext">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="nameInput">Name:</label>
+        <InputText id="nameInput" @bind-Value="uploadFormModel.Name" class="form-control" />
+       
+    </div>
+
+    <div class="form-group">
+        <label for="fileInput">File:</label>
+        <InputFile id="fileInput" OnChange="LoadFiles" @bind-Value="uploadFormModel.File" class="form-control" />
+       
+    </div>
+
+    <button type="submit" class="btn btn-primary" @onclick="@(() =>HandleValidSubmit(formContext))">Submit</button>
+</EditForm>
+
+@code {
+    private UploadFormModel uploadFormModel = new UploadFormModel();
+
+    private async Task HandleValidSubmit(EditContext formContext)
+    {
+        bool formIsValid = formContext.Validate();
+        if (!formIsValid)
+        {
+            return;
+        }
+        // Handle form submission
+        if (uploadFormModel.File != null)
+        {
+            // Example: Upload the file
+            using (var memoryStream = new MemoryStream())
+            {
+                await uploadFormModel.File.OpenReadStream().CopyToAsync(memoryStream);
+                byte[] fileBytes = memoryStream.ToArray();
+                // Process the fileBytes
+                try
+                {
+                    await SSC.PostCsvAsync(uploadFormModel.Name, fileBytes);
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+            }
+            NavManager.NavigateTo("/");
+        }
+            // You can also access the 'uploadFormModel.Name' here
+    }
+    private void LoadFiles(InputFileChangeEventArgs e)
+    {
+        var selectedFiles = e.GetMultipleFiles();
+        foreach (var file in selectedFiles)
+        {
+            uploadFormModel.File = file;
+        }
+    }
+    private void HandleInvalidSubmit()
+    {
+        // Handle invalid form submission
+    }
+   }

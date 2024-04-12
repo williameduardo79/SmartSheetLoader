@@ -1,0 +1,44 @@
+﻿@page "/"
+@using SmartSheetLoader.Services
+@using SmartSheetLoader.Models
+@inject ISmartsheetClient SSC 
+<PageTitle>Index</PageTitle>
+
+<h1>Sheets</h1>
+
+@if (sheets == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>accessLevel</th>
+                <th>permalink</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sheet in sheets.data)
+            {
+                <tr>
+                    <td><a href="SheetGrouped/@sheet.id">@sheet.id</a></td>
+                    <td>@sheet.name</td>
+                    <td>@sheet.accessLevel</td>
+                    <td>@sheet.permalink</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@code {
+    private SheetsResponse? sheets;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sheets = await SSC.GetSheetsAsync();
+    }
+}

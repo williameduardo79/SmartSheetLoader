@@ -1,0 +1,76 @@
+﻿@page "/sheet/{sheetId}"
+@using Syncfusion.Blazor.Grids
+@using SmartSheetLoader.Models
+@using Syncfusion.Blazor.Data
+
+
+
+
+@if (sheet == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h3>@sheet.name</h3>
+    if(assignmentData != null)
+    {
+        <div class="col-lg-12 control-section">
+            <div class="content-wrapper">
+                <div class="row">
+                    <SfGrid DataSource="@assignmentData" Height="800" AllowGrouping="true" AllowSorting="true" >
+                       <GridGroupSettings Columns="@GroupedColumn"></GridGroupSettings>
+                       
+                   
+                        <GridColumns>
+                           <GridColumn Field="@nameof(DataFromAssignment.id)" HeaderText="Id" Width="50"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.first_name)" HeaderText="First Name" Width="120"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.last_name)" HeaderText="Last Name" Width="120"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.email)" HeaderText="Email" Width="150"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.gender)" HeaderText="Gender" Width="100"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.country)" HeaderText="Country" Width="120"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.state)" HeaderText="State" Width="120"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.city)" HeaderText="City" Width="120"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.street_address)" HeaderText="Street Address" Width="200"></GridColumn>
+                            <GridColumn Field="@nameof(DataFromAssignment.zipcode)" HeaderText="Zip Code" Width="100"></GridColumn>
+
+                           
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    @foreach (var column in sheet.columns)
+                    {
+                        <th>@column.title</th>
+                    }
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in sheet.rows)
+                {
+                    <tr>
+                        @foreach (var cell in row.cells)
+                        {
+                            <td>@cell.displayValue</td>
+                        }
+
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+   
+
+   
+    
+}
+

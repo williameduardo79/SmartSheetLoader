@@ -1,0 +1,73 @@
+﻿@page "/sheetgrouped/{sheetId}"
+
+
+@if (sheet == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h3>@sheet.name</h3>
+   
+        <table class="table">
+            <thead>
+                <tr>
+                    @foreach (var column in sheet.columns)
+                    {
+                        <th>@column.title</th>
+                    }
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in sheet.rows)
+                {
+                    <tr>
+                        @foreach (var cell in row.cells)
+                        {
+                            <td>@cell.displayValue</td>
+                        }
+
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    @if (assignmentData != null)
+    {
+        <h3>Group by Country and State</h3>
+
+        <table class="table">
+            <thead>
+                <tr>
+
+                    <th>Country</th>
+                    <th>State</th>
+                    <th>Total Arr</th>
+
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in assignmentData)
+                {
+                    <tr>
+
+                        <td>@row.country</td>
+                        <td>@row.state</td>
+                        <td>@row.arr</td>
+
+
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+   
+
+   
+    
+}
+
