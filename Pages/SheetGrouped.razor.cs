@@ -79,12 +79,8 @@ namespace SmartSheetLoader.Pages
                                         }).ToList();
 
 
-
-
             }
-
-
-            
+         
         }
         protected async Task UploadGroupingAsync()
         {
@@ -101,9 +97,6 @@ namespace SmartSheetLoader.Pages
 
             csvFile.Dispose();
         }
-        protected async Task GroupBy(string group)
-        {
-
-        }
+       
     }
 }
