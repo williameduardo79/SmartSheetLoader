@@ -26,6 +26,7 @@ namespace SmartSheetLoader
                 //client.DefaultRequestHeaders.Add("Authorization", $"Bearer {myApiSettings}");
             });
             builder.Services.AddScoped<ISmartsheetClient, SmartsheetClient>();
+            builder.Services.AddScoped<ICsvProcessor, CsvProcessor>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

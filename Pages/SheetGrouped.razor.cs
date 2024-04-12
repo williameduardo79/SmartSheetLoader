@@ -6,6 +6,9 @@ using SmartSheetLoader.Models;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using Newtonsoft.Json;
+using System.Net.Security;
+using System.IO;
+using Syncfusion.Blazor.Inputs;
 
 namespace SmartSheetLoader.Pages
 {
@@ -14,6 +17,8 @@ namespace SmartSheetLoader.Pages
 
         [Inject] 
         ISmartsheetClient SSC { get; set; }
+        [Inject]
+        ICsvProcessor CSV { get; set; }
         [Parameter]
         public string sheetId { get; set; }
         public SheetResponse? sheet;
@@ -80,6 +85,21 @@ namespace SmartSheetLoader.Pages
 
 
             
+        }
+        protected async Task UploadGroupingAsync()
+        {
+            var csvFile = CSV.ConvertClassToCsvStream<DataFromAssignmentGrouped>(assignmentData);
+
+            using (MemoryStream memoryStream = new MemoryStream())
+            {
+                // Copy the data from the input Stream to the MemoryStream
+                csvFile.CopyTo(memoryStream);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                
+                await SSC.PostCsvAsync("CountryAndState",memoryStream.ToArray());
+            }
+
+            csvFile.Dispose();
         }
         protected async Task GroupBy(string group)
         {
