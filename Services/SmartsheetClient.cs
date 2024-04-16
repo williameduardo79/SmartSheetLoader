@@ -2,6 +2,7 @@
 using SmartSheetLoader.Pages;
 using System.Net.Http.Headers;
 using System.Net.Mail;
+using System.Text;
 using System.Text.Json;
 
 namespace SmartSheetLoader.Services
@@ -104,8 +105,37 @@ namespace SmartSheetLoader.Services
                 throw new Exception(model.message);
             return model;
         }
-      
 
+        public async Task<CreateSheetResponse> CreateSheetAsync(CreateSheetRequest sheet)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                { "include", "ruleRecipients" },
+                { "accessApiLevel", "0" }
+
+            };
+            var queryString = string.Join("&", queryParams.Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value)}"));
+            var requestUrl = $"sheets?{queryString}";
+
+            var httpClient = _clientFactory.CreateClient("smartsheet");
+
+
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+   
+          var payload = JsonSerializer.Serialize(sheet);
+            var content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+
+            // Send the request
+            HttpResponseMessage response = await httpClient.PostAsync(requestUrl, content);
+            response.EnsureSuccessStatusCode();
+            var responseString = await response.Content.ReadAsStringAsync();
+            CreateSheetResponse model = JsonSerializer.Deserialize<CreateSheetResponse>(responseString);
+            if (model.message != "SUCCESS")
+                throw new Exception(model.message);
+            return model;
+        }
 
     }
 
