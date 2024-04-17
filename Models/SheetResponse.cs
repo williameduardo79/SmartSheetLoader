@@ -53,6 +53,7 @@
         public class Row
         {
             public long id { get; set; }
+            public long? parentId { get; set; }
             public int rowNumber { get; set; }
             public bool expanded { get; set; }
             public DateTime createdAt { get; set; }

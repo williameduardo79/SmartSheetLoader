@@ -1,6 +1,32 @@
 ﻿@page "/sheetgrouped/{sheetId}"
 
+@if (groupAvailable)
+{
+    <div class="form-group">
+        <label for="GroupBy">Group By:</label>
+        <InputSelect id="GroupBy" @bind-Value="selectedOption" class="form-control">
+            <option value="**None">No Grouping</option>
+            @foreach (var option in groupByOptions)
+            {
+                <option value="@option">@option</option>
+            }
+        </InputSelect>
 
+    </div>
+    <div class="form-group">
+        <label for="SumBy">Sum By:</label>
+        <InputSelect id="SumBy" @bind-Value="sumOption" class="form-control">
+            <option value="**None">No Sum</option>
+            @foreach (var option in sumOptions)
+            {
+                <option value="@option">@option</option>
+            }
+        </InputSelect>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary" @onclick="@(() =>ProcessSubmit())">Submit</button>
+}
 @if (sheet == null)
 {
     <p><em>Loading...</em></p>
