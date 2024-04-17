@@ -1,6 +1,7 @@
 ﻿using Smartsheet.Api.Models;
 using SmartSheetLoader.Models;
 using SmartSheetLoader.Pages;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Mail;
@@ -254,29 +255,40 @@ namespace SmartSheetLoader.Services
                 }
 
                 //** START Indent rows
-                List<Row> rowsToUpdate = new List<Row>();
-                foreach (var row in sheet.Rows)
+               //Get updated sheet content as a whole for fast querying
+                var updatedSheet = _smartsheetClient.SheetResources.GetSheet(sheetId, null, null, null, null, null, null, null);
+                //Update in group batches to prevent Exception
+                foreach (string key in groupDictionary.Keys)
                 {
-                    var rowfromSheet = _smartsheetClient.SheetResources.RowResources.GetRow(sheetId, row.Id.Value,null,null);
-                    string groupCellValue = rowfromSheet.Cells.FirstOrDefault(cell=>cell.ColumnId== groupById)?.Value?.ToString();
-                    if (groupCellValue != null)
+                    List<Row> rowsToUpdate = new List<Row>();
+                    foreach (var row in sheet.Rows)
                     {
-                       
-                        var parentRowId = groupDictionary[groupCellValue];
-                       
+                        var rowfromSheet = updatedSheet.Rows.FirstOrDefault(item => item.Id == row.Id);
+                        string groupCellValue = rowfromSheet.Cells.FirstOrDefault(cell => cell.ColumnId == groupById)?.Value?.ToString();
+                        if (groupCellValue != null)
+                        {
+                            if (groupCellValue == key)
+                            {
+                                var parentRowId = groupDictionary[groupCellValue];
 
-                        Row updatedRow = new Row.UpdateRowBuilder(row.Id.Value)
-                            .SetParentId(parentRowId)
-                            //.SetSiblingId(rowfromSheet.SiblingId)
-                            .SetAbove(false)
-                            .SetToTop(false)
-                            .Build();
-                        var singleUpdate = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, new List<Row> { updatedRow });
-                       // rowsToUpdate.Add(updatedRow);
+
+                                Row updatedRow = new Row.UpdateRowBuilder(row.Id.Value)
+                               .SetParentId(parentRowId)
+                               //.SetSiblingId(rowfromSheet.SiblingId)
+                               .SetAbove(false)
+                               .SetToTop(false)
+                               .Build();
+                                //var singleUpdate = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, new List<Row> { updatedRow });
+                                rowsToUpdate.Add(updatedRow);
+                            }
+
+
+                        }
+
                     }
-                   
+                    IList<Row> updatedRows = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, rowsToUpdate);
                 }
-               //IList<Row> updatedRows = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, rowsToUpdate);
+               
 
 
             }
