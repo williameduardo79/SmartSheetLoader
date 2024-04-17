@@ -4,6 +4,7 @@
 @using SmartSheetLoader.Models
 @using SmartSheetLoader.Services
 @inject ISmartsheetClient SSC
+@inject ICsvProcessor CSV
 @inject NavigationManager NavManager
 <h3>Upload Sheet</h3>
 
@@ -22,13 +23,38 @@
         <InputFile id="fileInput" OnChange="LoadFiles" @bind-Value="uploadFormModel.File" class="form-control" />
        
     </div>
+    <div class="form-group">
+        <label for="GroupBy">Group By:</label>
+        <InputSelect id="GroupBy" @bind-Value="selectedOption" class="form-control">
+            <option value="**None">No Grouping</option>
+            @foreach (var option in groupByOptions)
+            {
+                <option value="@option">@option</option>
+            }
+        </InputSelect>
+
+    </div>
+    <div class="form-group">
+        <label for="SumBy">Sum By:</label>
+        <InputSelect id="SumBy" @bind-Value="sumOption" class="form-control">
+            <option value="**None">No Sum</option>
+            @foreach (var option in sumOptions)
+            {
+                <option value="@option">@option</option>
+            }
+        </InputSelect>
+
+    </div>
 
     <button type="submit" class="btn btn-primary" @onclick="@(() =>HandleValidSubmit(formContext))">Submit</button>
 </EditForm>
 
 @code {
     private UploadFormModel uploadFormModel = new UploadFormModel();
-
+    private List<string> groupByOptions = new List<string>();
+    private List<string> sumOptions = new List<string>();
+    private string selectedOption;
+    private string sumOption;
     private async Task HandleValidSubmit(EditContext formContext)
     {
         bool formIsValid = formContext.Validate();
@@ -47,7 +73,18 @@
                 // Process the fileBytes
                 try
                 {
-                    await SSC.PostCsvAsync(uploadFormModel.Name, fileBytes);
+                    var loadedFile = await SSC.PostCsvAsync(uploadFormModel.Name, fileBytes);
+
+                    if (selectedOption != "**None")
+                    {
+                        SSC.AddGroupingToSheet(loadedFile.result.id, selectedOption);
+
+                    }
+                    if(sumOption != "**None")
+                    {
+                        SSC.AddSumToSheet(loadedFile.result.id, sumOption);
+                    }
+
                 }
                 catch(Exception ex)
                 {
@@ -57,14 +94,28 @@
             }
             NavManager.NavigateTo("/");
         }
-            // You can also access the 'uploadFormModel.Name' here
+        // You can also access the 'uploadFormModel.Name' here
     }
-    private void LoadFiles(InputFileChangeEventArgs e)
+    private async Task LoadFiles(InputFileChangeEventArgs e)
     {
         var selectedFiles = e.GetMultipleFiles();
         foreach (var file in selectedFiles)
         {
             uploadFormModel.File = file;
+            using (var stream = file.OpenReadStream())
+            {
+                // Read the content of the file
+                byte[] buffer = new byte[file.Size];
+                await stream.ReadAsync(buffer, 0, buffer.Length);
+
+                // Now 'buffer' contains the content of the uploaded file
+                // You can process the file content here
+                var headers = CSV.GetFileHeaders(buffer);
+                groupByOptions = headers.Where(x => x.DataTypeEnum == SmartSheetLoader.Enums.HeaderDataTypeEnum.text).Select(y => y.HeaderTitle).ToList();
+                sumOptions = headers.Where(x => x.DataTypeEnum == SmartSheetLoader.Enums.HeaderDataTypeEnum.number).Select(y => y.HeaderTitle).ToList();
+            }
+           
+
         }
     }
     private void HandleInvalidSubmit()

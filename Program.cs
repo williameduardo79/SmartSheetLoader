@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
+using SmartSheetApi = Smartsheet.Api;
 using SmartSheetLoader.Services;
 using Syncfusion.Blazor;
+using SmartsheetClientSdk = Smartsheet.Api.SmartsheetClient;
 
 namespace SmartSheetLoader
 {
@@ -16,14 +18,20 @@ namespace SmartSheetLoader
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
             builder.Services.AddSyncfusionBlazor();
-
+            var myApiSettings = builder.Configuration.GetValue<string>("SmartSheetToken");
             builder.Services.AddHttpClient("smartsheet", client =>
             {
-                var myApiSettings = builder.Configuration.GetValue<string>("SmartSheetToken");
+                
                 var baseAddress = builder.Configuration.GetValue<string>("BaseAddress");
                 client.BaseAddress = new Uri(baseAddress);
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", myApiSettings);
                 //client.DefaultRequestHeaders.Add("Authorization", $"Bearer {myApiSettings}");
+            });
+            builder.Services.AddSingleton<SmartsheetClientSdk>(provider =>
+            {
+
+                // Create and return an instance of SmartsheetClient
+                return new SmartSheetApi.SmartsheetBuilder().SetAccessToken(myApiSettings).Build();
             });
             builder.Services.AddScoped<ISmartsheetClient, SmartsheetClient>();
             builder.Services.AddScoped<ICsvProcessor, CsvProcessor>();
