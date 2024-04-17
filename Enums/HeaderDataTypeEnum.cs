@@ -1,6 +1,6 @@
 ﻿namespace SmartSheetLoader.Enums
 {
-    public enum CsvDataTypeEnum
+    public enum HeaderDataTypeEnum
     {
         text,
         number

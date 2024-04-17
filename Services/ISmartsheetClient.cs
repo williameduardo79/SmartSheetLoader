@@ -11,5 +11,6 @@ namespace SmartSheetLoader.Services
         void RemoveEmptyRows(long sheetId);
         void AddGroupingToSheet(long sheetId, string groupBy);
         void AddSumToSheet(long sheetId, string sumBy);
+        List<HeaderWithType> GetFileHeaders(SheetResponse sheetResponse);
     }
 }

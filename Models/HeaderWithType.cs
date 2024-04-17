@@ -2,10 +2,10 @@
 
 namespace SmartSheetLoader.Models
 {
-    public class CsvHeaderWithType
+    public class HeaderWithType
     {
         public string HeaderTitle { get; set; }
-        public CsvDataTypeEnum DataTypeEnum { get; set; }
+        public HeaderDataTypeEnum DataTypeEnum { get; set; }
 
     }
 }

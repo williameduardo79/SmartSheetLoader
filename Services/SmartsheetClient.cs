@@ -1,4 +1,6 @@
-﻿using Smartsheet.Api.Models;
+﻿using Newtonsoft.Json.Linq;
+using Smartsheet.Api.Models;
+using SmartSheetLoader.Enums;
 using SmartSheetLoader.Models;
 using SmartSheetLoader.Pages;
 using System.Collections.Generic;
@@ -190,7 +192,8 @@ namespace SmartSheetLoader.Services
             if (sumById != null)
             {
                 List<Row> rowsToUpdate = new List<Row>();
-                foreach (Row row in sheet.Rows)
+                List<Row> rowsWithNoParent = sheet.Rows.Where(row=>row.ParentId==null).ToList();
+                foreach (Row row in rowsWithNoParent)
                 {
                     if (row.ParentId == null)
                     {
@@ -224,6 +227,25 @@ namespace SmartSheetLoader.Services
                 if(rowsToUpdate.Any())
                 {
                     IList<Row> updatedRows = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, rowsToUpdate);
+
+                }
+                else
+                {//No parents. Add new row
+                   
+                    var rowNumbers = sheet.Rows.Select(item => item.RowNumber).ToList();
+                    var minRow = rowNumbers.Min();
+                    var maxRow = rowNumbers.Max();
+                    Cell newCell = new Cell.AddCellBuilder(sumById, "").Build();
+                    newCell.Formula= $"=SUM({sumBy}{minRow.Value.ToString()}:{sumBy}{maxRow.Value.ToString()})";
+                  
+                    Row newRow = new Row.AddRowBuilder(true, null, null, null, false)
+                            .SetCells(new Cell[] {
+
+                                    newCell
+                                // Add more cells as needed for additional columns
+                            })
+                            .Build();
+                    IList<Row> addedRows = _smartsheetClient.SheetResources.RowResources.AddRows(sheetId, new List<Row> { newRow });
                 }
             }
         }
@@ -338,6 +360,58 @@ namespace SmartSheetLoader.Services
             }
            
 
+        }
+        public List<HeaderWithType> GetFileHeaders(SheetResponse sheetResponse)
+        {
+            List<HeaderWithType> headerWithTypes = new List<HeaderWithType>();
+            var headers = sheetResponse.columns.Where(item => item.title.ToLower() != "id").ToDictionary(x=>x.id,x=>x.title);
+            foreach (var smartRow in sheetResponse.rows)
+            {
+                foreach(var smartCell in smartRow.cells)
+                {
+                    if (headers.ContainsKey(smartCell.columnId))
+                    {
+                        //if exists then we have already assign the column and type from the previous row
+                        var headerWithType = headerWithTypes.Where(item => item.HeaderTitle == headers[smartCell.columnId]).FirstOrDefault();
+                        if (headerWithType != null)
+                        {
+                            if (headerWithType.DataTypeEnum == HeaderDataTypeEnum.text)
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                //This column was set as non-text (numeric) and now it seems to be text, should be updated to text.
+                                //This happens with Zip code for example where it can be set as numeric based on one row and then text is found on a different row
+                                if (Helper.Utility.DetermineDataType(smartCell.value) == HeaderDataTypeEnum.text)
+                                {
+                                    headerWithType.DataTypeEnum = HeaderDataTypeEnum.text;
+                                }
+                            }
+                        }
+                        else
+                        {
+
+                            var type = Helper.Utility.DetermineDataType(smartCell.value);
+                            if(type != null)
+                            {
+                                headerWithType = new HeaderWithType();
+
+                                headerWithType.HeaderTitle = headers[smartCell.columnId];
+
+                                headerWithType.DataTypeEnum = type.Value;
+
+                                headerWithTypes.Add(headerWithType);
+                            }
+                           
+
+
+                        }
+                    }
+                        
+                }
+            }
+            return headerWithTypes;
         }
     }
 

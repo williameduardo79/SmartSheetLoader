@@ -33,10 +33,10 @@ namespace SmartSheetLoader.Services
 
             return memoryStream;
         }
-        public List<CsvHeaderWithType> GetFileHeaders(byte[] fileBytes)
+        public List<HeaderWithType> GetFileHeaders(byte[] fileBytes)
         {
             var encoding = Encoding.UTF8;
-            List<CsvHeaderWithType> csvHeaderWithTypes = new List<CsvHeaderWithType>();
+            List<HeaderWithType> csvHeaderWithTypes = new List<HeaderWithType>();
 
             using (var memoryStream = new MemoryStream(fileBytes))
             using (var reader = new StreamReader(memoryStream, encoding))
@@ -58,7 +58,7 @@ namespace SmartSheetLoader.Services
                             if (csvHeaderWithType != null)
                             {
                                 //No need to check the type since it already has been set to text for this column based on previous values
-                                if(csvHeaderWithType.DataTypeEnum == CsvDataTypeEnum.text)
+                                if(csvHeaderWithType.DataTypeEnum == HeaderDataTypeEnum.text)
                                 {
                                     continue;
                                 }
@@ -66,16 +66,16 @@ namespace SmartSheetLoader.Services
                                 {
                                     //This column was set as non-text (numeric) and now it seems to be text, should be updated to text.
                                     //This happens with Zip code for example where it can be set as numeric based on one row and then text is found on a different row
-                                    if(SetHeaderWithType(record, field) == CsvDataTypeEnum.text)
+                                    if(SetHeaderWithType(record, field) == HeaderDataTypeEnum.text)
                                     {
-                                        csvHeaderWithType.DataTypeEnum = CsvDataTypeEnum.text;
+                                        csvHeaderWithType.DataTypeEnum = HeaderDataTypeEnum.text;
                                     }
                                 }
                             }
                             else
                             {
                                 //New column not set previusly
-                                csvHeaderWithType = new CsvHeaderWithType();
+                                csvHeaderWithType = new HeaderWithType();
 
                                 csvHeaderWithType.HeaderTitle = field;
 
@@ -93,37 +93,25 @@ namespace SmartSheetLoader.Services
             // Convert headers to a list and return
             return csvHeaderWithTypes;
         }
-        private CsvDataTypeEnum SetHeaderWithType(dynamic record, string field)
+        private HeaderDataTypeEnum SetHeaderWithType(dynamic record, string field)
         {
 
             try
             {
                 // Use CsvHelper's TypeConverter to parse the value with correct data type
                 object value = ((IDictionary<string, object>)record)[field];
-                return DetermineDataType(value);
+                var type = Helper.Utility.DetermineDataType(value);
+             
+                
+                return type == null? HeaderDataTypeEnum.text : type.Value;
             }
             catch (Exception ex)
             {
                 // Handle parsing errors gracefully (e.g., log or skip problematic fields)
-                return CsvDataTypeEnum.text; // or handle specific error cases
+                return HeaderDataTypeEnum.text; // or handle specific error cases
             }
         }
-        private CsvDataTypeEnum DetermineDataType(object value)
-        {
-            if(long.TryParse(value.ToString() , out var type))
-            {
-                return CsvDataTypeEnum.number;
-            }
-           
-            //else if (value is DateTime)
-            //{
-            //    return CsvDataTypeEnum.DateTime;
-            //}
-            else
-            {
-                return CsvDataTypeEnum.text; // Default to text if data type is unknown
-            }
-        }
+       
     }
        
 }

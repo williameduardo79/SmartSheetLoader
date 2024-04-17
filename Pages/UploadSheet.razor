@@ -111,8 +111,8 @@
                 // Now 'buffer' contains the content of the uploaded file
                 // You can process the file content here
                 var headers = CSV.GetFileHeaders(buffer);
-                groupByOptions = headers.Where(x => x.DataTypeEnum == SmartSheetLoader.Enums.CsvDataTypeEnum.text).Select(y => y.HeaderTitle).ToList();
-                sumOptions = headers.Where(x => x.DataTypeEnum == SmartSheetLoader.Enums.CsvDataTypeEnum.number).Select(y => y.HeaderTitle).ToList();
+                groupByOptions = headers.Where(x => x.DataTypeEnum == SmartSheetLoader.Enums.HeaderDataTypeEnum.text).Select(y => y.HeaderTitle).ToList();
+                sumOptions = headers.Where(x => x.DataTypeEnum == SmartSheetLoader.Enums.HeaderDataTypeEnum.number).Select(y => y.HeaderTitle).ToList();
             }
            
 
