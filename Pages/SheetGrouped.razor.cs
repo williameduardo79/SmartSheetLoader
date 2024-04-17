@@ -67,16 +67,23 @@ namespace SmartSheetLoader.Pages
                     jsonArray.Add(rowObject);
                 }
                 string jsonString = jsonArray.ToString();
-                var dataFromAssignment = JsonConvert.DeserializeObject<List<DataFromAssignment>>(jsonString);
+                try
+                {
+                    var dataFromAssignment = JsonConvert.DeserializeObject<List<DataFromAssignment>>(jsonString);
 
-                assignmentData = dataFromAssignment
-                                       .GroupBy(a => new { a.country, a.state })
-                                        .Select(g => new DataFromAssignmentGrouped
-                                        {
-                                            country = g.Key.country,
-                                            state = g.Key.state,
-                                            arr = g.Sum(a => a.arr)
-                                        }).ToList();
+                    assignmentData = dataFromAssignment
+                                           .GroupBy(a => new { a.country, a.state })
+                                            .Select(g => new DataFromAssignmentGrouped
+                                            {
+                                                country = g.Key.country,
+                                                state = g.Key.state,
+                                                arr = g.Sum(a => a.arr)
+                                            }).ToList();
+                }
+              catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
 
 
             }
@@ -91,8 +98,35 @@ namespace SmartSheetLoader.Pages
                 // Copy the data from the input Stream to the MemoryStream
                 csvFile.CopyTo(memoryStream);
                 memoryStream.Seek(0, SeekOrigin.Begin);
+
+                CreateSheetRequest createSheetRequest = new();
+                CreateSheetRequest.Column id = new CreateSheetRequest.Column();
+                id.title = "Id";
+                id.type = "TEXT_NUMBER";
+                id.width = 150;
+                id.primary = "true";
+                CreateSheetRequest.Column country = new CreateSheetRequest.Column();
+                country.title = "Country";
+                country.type = "PICKLIST";
+                country.width = 150;
+                country.options = new List<string>{ "United States", "Canada" };
+                CreateSheetRequest.Column state = new CreateSheetRequest.Column();
+                state.title = "State";
+                state.type = "TEXT_NUMBER";
+                state.width = 150;
+                CreateSheetRequest.Column arr = new CreateSheetRequest.Column();
+                arr.title = "Arr";
+                arr.type = "TEXT_NUMBER";
+                arr.width = 150;
+                createSheetRequest.name = "Test New Sheet";
+                createSheetRequest.columns.Add(id);
+                createSheetRequest.columns.Add(country);
+                createSheetRequest.columns.Add(state);
+                createSheetRequest.columns.Add(arr);
+
+                await SSC.CreateSheetAsync(createSheetRequest);
                 
-                await SSC.PostCsvAsync("CountryAndState",memoryStream.ToArray());
+                //await SSC.PostCsvAsync("CountryAndState",memoryStream.ToArray());
             }
 
             csvFile.Dispose();

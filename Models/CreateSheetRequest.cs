@@ -2,14 +2,21 @@
 {
     public class CreateSheetRequest
     {
-
-       
-            public List<Column> columns { get; set; }
+        public CreateSheetRequest()
+        {
+            columns = new List<Column>();
+           
+        }
+        public List<Column> columns { get; set; }
             public string name { get; set; }
         
 
         public class Column
         {
+            public Column()
+            {
+                options = new List<string>();
+            }
             public Autonumberformat autoNumberFormat { get; set; }
             public List<Contactoption> contactOptions { get; set; }
             public List<string> options { get; set; }
@@ -18,7 +25,7 @@
             public string systemColumnType { get; set; }
             public string title { get; set; }
             public string type { get; set; }
-            public string width { get; set; }
+            public int width { get; set; }
         }
 
         public class Autonumberformat

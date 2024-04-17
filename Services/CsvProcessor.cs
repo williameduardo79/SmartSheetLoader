@@ -1,5 +1,12 @@
 ﻿using CsvHelper;
+using CsvHelper.Configuration;
+using SmartSheetLoader.Models;
+using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
+using System.Text;
+using SmartSheetLoader.Enums;
+using System.Numerics;
 
 namespace SmartSheetLoader.Services
 {
@@ -26,5 +33,97 @@ namespace SmartSheetLoader.Services
 
             return memoryStream;
         }
+        public List<CsvHeaderWithType> GetFileHeaders(byte[] fileBytes)
+        {
+            var encoding = Encoding.UTF8;
+            List<CsvHeaderWithType> csvHeaderWithTypes = new List<CsvHeaderWithType>();
+
+            using (var memoryStream = new MemoryStream(fileBytes))
+            using (var reader = new StreamReader(memoryStream, encoding))
+            using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            {
+                csv.Read();
+                csv.ReadHeader();
+                var headers = csv.HeaderRecord.Where(item => item.ToLower()!="id");
+                IEnumerable<dynamic> records = csv.GetRecords<dynamic>();
+                if (records != null)
+                {
+                   //Check each row of the CSV to property match the column type (numeric and text)
+                    foreach (dynamic record in records)
+                    {
+                      foreach (var field in headers)
+                        {
+                            //if exists then we have already assign the column and type from the previous row
+                            var csvHeaderWithType = csvHeaderWithTypes.Where(item => item.HeaderTitle == field).FirstOrDefault();
+                            if (csvHeaderWithType != null)
+                            {
+                                //No need to check the type since it already has been set to text for this column based on previous values
+                                if(csvHeaderWithType.DataTypeEnum == CsvDataTypeEnum.text)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    //This column was set as non-text (numeric) and now it seems to be text, should be updated to text.
+                                    //This happens with Zip code for example where it can be set as numeric based on one row and then text is found on a different row
+                                    if(SetHeaderWithType(record, field) == CsvDataTypeEnum.text)
+                                    {
+                                        csvHeaderWithType.DataTypeEnum = CsvDataTypeEnum.text;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                //New column not set previusly
+                                csvHeaderWithType = new CsvHeaderWithType();
+
+                                csvHeaderWithType.HeaderTitle = field;
+
+                                csvHeaderWithType.DataTypeEnum = SetHeaderWithType(record, field);
+
+                                csvHeaderWithTypes.Add(csvHeaderWithType);
+
+                            }
+    
+                        }
+                    } 
+                }
+            }
+
+            // Convert headers to a list and return
+            return csvHeaderWithTypes;
+        }
+        private CsvDataTypeEnum SetHeaderWithType(dynamic record, string field)
+        {
+
+            try
+            {
+                // Use CsvHelper's TypeConverter to parse the value with correct data type
+                object value = ((IDictionary<string, object>)record)[field];
+                return DetermineDataType(value);
+            }
+            catch (Exception ex)
+            {
+                // Handle parsing errors gracefully (e.g., log or skip problematic fields)
+                return CsvDataTypeEnum.text; // or handle specific error cases
+            }
+        }
+        private CsvDataTypeEnum DetermineDataType(object value)
+        {
+            if(long.TryParse(value.ToString() , out var type))
+            {
+                return CsvDataTypeEnum.number;
+            }
+           
+            //else if (value is DateTime)
+            //{
+            //    return CsvDataTypeEnum.DateTime;
+            //}
+            else
+            {
+                return CsvDataTypeEnum.text; // Default to text if data type is unknown
+            }
+        }
     }
+       
 }
