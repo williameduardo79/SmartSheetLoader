@@ -183,8 +183,51 @@ namespace SmartSheetLoader.Services
         
         
         }
+        public void AddSumToSheet(long sheetId, string sumBy)
+        {
+            var sheet = _smartsheetClient.SheetResources.GetSheet(sheetId, null, null, null, null, null, null, null);
+            long? sumById = sheet.Columns.FirstOrDefault(column => column.Title == sumBy)?.Id;
+            if (sumById != null)
+            {
+                List<Row> rowsToUpdate = new List<Row>();
+                foreach (Row row in sheet.Rows)
+                {
+                    if (row.ParentId == null)
+                    {
+                       
+                        List<Row> childrenRows = sheet.Rows.Where(item=>item.ParentId==row.Id).ToList();
+                        if(childrenRows.Any())
+                        {
+                           
+                            var rowNumbers = childrenRows.Select(item => item.RowNumber).ToList();
+                            var minRow = rowNumbers.Min();
+                            var maxRow = rowNumbers.Max();
 
-        public void AddGroupingToSheet(long sheetId,string groupBy, string? sumBy)
+                            Cell? cell = row.Cells.FirstOrDefault(x=>x.ColumnId==sumById);
+                           
+                            if (cell != null)
+                            {
+                                cell.Formula = $"=SUM({sumBy}{minRow.Value.ToString()}:{sumBy}{maxRow.Value.ToString()})";
+                                
+                                Row updatedRow = new Row.UpdateRowBuilder(row.Id.Value)
+                                .SetCells(new List<Cell >() { cell })
+                                
+                                 .Build();
+                                //var singleUpdate = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, new List<Row> { updatedRow });
+                                rowsToUpdate.Add(updatedRow);
+                               
+                            }
+                        }
+                        
+                    }
+                }
+                if(rowsToUpdate.Any())
+                {
+                    IList<Row> updatedRows = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, rowsToUpdate);
+                }
+            }
+        }
+        public void AddGroupingToSheet(long sheetId,string groupBy)
         {
             //Get the sheet
             var sheet = _smartsheetClient.SheetResources.GetSheet(sheetId, null, null, null, null, null, null, null);
@@ -280,6 +323,8 @@ namespace SmartSheetLoader.Services
                                .Build();
                                 //var singleUpdate = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, new List<Row> { updatedRow });
                                 rowsToUpdate.Add(updatedRow);
+                                
+                              
                             }
 
 
@@ -289,7 +334,6 @@ namespace SmartSheetLoader.Services
                     IList<Row> updatedRows = _smartsheetClient.SheetResources.RowResources.UpdateRows(sheetId, rowsToUpdate);
                 }
                
-
 
             }
            

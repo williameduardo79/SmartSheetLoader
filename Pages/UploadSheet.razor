@@ -77,9 +77,12 @@
 
                     if (selectedOption != "**None")
                     {
-                        SSC.AddGroupingToSheet(loadedFile.result.id, selectedOption, sumOption);
+                        SSC.AddGroupingToSheet(loadedFile.result.id, selectedOption);
 
-
+                    }
+                    if(sumOption != "**None")
+                    {
+                        SSC.AddSumToSheet(loadedFile.result.id, sumOption);
                     }
 
                 }
