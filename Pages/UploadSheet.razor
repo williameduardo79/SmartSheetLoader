@@ -45,8 +45,11 @@
         </InputSelect>
 
     </div>
-
-    <button type="submit" class="btn btn-primary" @onclick="@(() =>HandleValidSubmit(formContext))">Submit</button>
+    @if(!loading)
+    {
+        <button type="submit" class="btn btn-primary" @onclick="@(() =>HandleValidSubmit(formContext))">Submit</button>
+    }
+   
 </EditForm>
 
 @code {
@@ -55,6 +58,8 @@
     private List<string> sumOptions = new List<string>();
     private string selectedOption;
     private string sumOption;
+    private bool loading = false;
+
     private async Task HandleValidSubmit(EditContext formContext)
     {
         bool formIsValid = formContext.Validate();
@@ -65,36 +70,45 @@
         // Handle form submission
         if (uploadFormModel.File != null)
         {
-            // Example: Upload the file
-            using (var memoryStream = new MemoryStream())
+            loading = true;
+            StateHasChanged();
+
+            await ProcessFile().ConfigureAwait(false);
+            
+            NavManager.NavigateTo("/");
+            loading = false;
+        }
+        // You can also access the 'uploadFormModel.Name' here
+    }
+    private async Task ProcessFile()
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            await uploadFormModel.File.OpenReadStream().CopyToAsync(memoryStream);
+            byte[] fileBytes = memoryStream.ToArray();
+            // Process the fileBytes
+            try
             {
-                await uploadFormModel.File.OpenReadStream().CopyToAsync(memoryStream);
-                byte[] fileBytes = memoryStream.ToArray();
-                // Process the fileBytes
-                try
+                var loadedFile = await SSC.PostCsvAsync(uploadFormModel.Name, fileBytes);
+
+
+                if (selectedOption != "**None")
                 {
-                    var loadedFile = await SSC.PostCsvAsync(uploadFormModel.Name, fileBytes);
-
-                    if (selectedOption != "**None")
-                    {
-                        SSC.AddGroupingToSheet(loadedFile.result.id, selectedOption);
-
-                    }
-                    if(sumOption != "**None")
-                    {
-                        SSC.AddSumToSheet(loadedFile.result.id, sumOption);
-                    }
+                    await SSC.AddGroupingToSheetAsync(loadedFile.result.id, selectedOption);
 
                 }
-                catch(Exception ex)
+                if (sumOption != "**None")
                 {
-                    Console.WriteLine(ex.Message);
+                    await SSC.AddSumToSheetAsync(loadedFile.result.id, sumOption);
                 }
 
             }
-            NavManager.NavigateTo("/");
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
         }
-        // You can also access the 'uploadFormModel.Name' here
     }
     private async Task LoadFiles(InputFileChangeEventArgs e)
     {

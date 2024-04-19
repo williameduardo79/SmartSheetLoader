@@ -1,8 +1,10 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json.Linq;
 using Smartsheet.Api.Models;
 using SmartSheetLoader.Enums;
 using SmartSheetLoader.Models;
 using SmartSheetLoader.Pages;
+using SmartSheetLoader.SignalR;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
@@ -17,10 +19,14 @@ namespace SmartSheetLoader.Services
     {
         private IHttpClientFactory _clientFactory;
         private readonly SmartsheetApi.SmartsheetClient _smartsheetClient;
-        public SmartsheetClient(IHttpClientFactory clientFactory, SmartsheetApi.SmartsheetClient smartsheetClient)
+        private readonly IHubContext<CreateSignalMessage, ICreateSignalMessage> _messagingHub;
+        private readonly IMessagingMemoryAccess _MMS;
+        public SmartsheetClient(IHttpClientFactory clientFactory, SmartsheetApi.SmartsheetClient smartsheetClient, IMessagingMemoryAccess mMS, IHubContext<CreateSignalMessage, ICreateSignalMessage> hubContext)
         {
             _clientFactory = clientFactory;
             _smartsheetClient = smartsheetClient;
+            _MMS = mMS;
+            _messagingHub = hubContext;
         }
         public async Task<SheetsResponse> GetSheetsAsync()
         {
@@ -111,6 +117,7 @@ namespace SmartSheetLoader.Services
             UploadFileResponse model = JsonSerializer.Deserialize<UploadFileResponse>(responseString);
             if (model.message != "SUCCESS")
                 throw new Exception(model.message);
+            await SendMessage(sheetName, $"{sheetName} has completed loading to smart sheets");
             return model;
         }
 
@@ -185,7 +192,7 @@ namespace SmartSheetLoader.Services
         
         
         }
-        public void AddSumToSheet(long sheetId, string sumBy)
+        public async Task AddSumToSheetAsync(long sheetId, string sumBy)
         {
             var sheet = _smartsheetClient.SheetResources.GetSheet(sheetId, null, null, null, null, null, null, null);
             long? sumById = sheet.Columns.FirstOrDefault(column => column.Title == sumBy)?.Id;
@@ -247,9 +254,11 @@ namespace SmartSheetLoader.Services
                             .Build();
                     IList<Row> addedRows = _smartsheetClient.SheetResources.RowResources.AddRows(sheetId, new List<Row> { newRow });
                 }
+                await SendMessage(sheetId.ToString(), $"{sheet.Name} has completed calculating SUM for {sumBy}");
             }
+           
         }
-        public void AddGroupingToSheet(long sheetId,string groupBy)
+        public async Task AddGroupingToSheetAsync(long sheetId,string groupBy)
         {
             //Get the sheet
             var sheet = _smartsheetClient.SheetResources.GetSheet(sheetId, null, null, null, null, null, null, null);
@@ -358,7 +367,7 @@ namespace SmartSheetLoader.Services
                
 
             }
-           
+            await SendMessage(sheetId.ToString(), $"{sheet.Name} has completed grouping in SmartSheets");
 
         }
         public List<HeaderWithType> GetFileHeaders(SheetResponse sheetResponse)
@@ -411,8 +420,18 @@ namespace SmartSheetLoader.Services
                         
                 }
             }
+            
             return headerWithTypes;
         }
+        private async Task SendMessage(string key, string value)
+        {
+
+            _MMS.AddMessage(key, value);
+            var task = _messagingHub.Clients.All.SendStringMessageAsync(key).ConfigureAwait(false);
+         
+
+        }
     }
+   
 
 }

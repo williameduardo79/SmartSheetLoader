@@ -1,10 +1,18 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.SignalR
+@using Microsoft.AspNetCore.SignalR.Client
 @using SmartSheetLoader.Services
 @using SmartSheetLoader.Models
+@using SmartSheetLoader.SignalR
+@using Syncfusion.Blazor.Notifications
 @inject ISmartsheetClient SSC 
+
 <PageTitle>Index</PageTitle>
 
 <h1>Sheets</h1>
+
+@* <ToastMessage></ToastMessage> *@
+
 
 @if (sheets == null)
 {
@@ -35,10 +43,20 @@ else
     </table>
 }
 @code {
+    //SfToast ToastObj;
+    private string ToastPosition = "Right";
     private SheetsResponse? sheets;
+    private string message = "";
+   
 
     protected override async Task OnInitializedAsync()
     {
+       
         sheets = await SSC.GetSheetsAsync();
+        await base.OnInitializedAsync();
     }
+   
+
+  
+   
 }

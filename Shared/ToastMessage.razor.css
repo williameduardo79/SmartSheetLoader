@@ -1,0 +1,23 @@
+﻿#toast_default .e-meeting::before {
+    content: "\e705";
+    font-size: 17px;
+}
+
+#toastBtnHide {
+    margin-left: 10px;
+}
+
+.bootstrap4 #toast_default .e-meeting::before {
+    content: "\e763";
+    font-size: 20px;
+}
+
+.tailwind #toast_default .e-meeting::before,
+.tailwind-dark #toast_default .e-meeting::before,
+.fluent #toast_default .e-meeting::before,
+.fluent-dark #toast_default .e-meeting::before,
+.bootstrap5 #toast_default .e-meeting::before,
+.bootstrap5-dark #toast_default .e-meeting::before {
+    content: "\e7e9";
+    font-size: 18px;
+}
