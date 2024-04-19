@@ -15,7 +15,7 @@ namespace SmartSheetLoader
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(builder.Configuration.GetValue<string>("SyncFusion:keyValue"));
+            //Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(builder.Configuration.GetValue<string>("SyncFusion:keyValue"));
             // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
