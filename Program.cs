@@ -5,6 +5,8 @@ using SmartSheetApi = Smartsheet.Api;
 using SmartSheetLoader.Services;
 using Syncfusion.Blazor;
 using SmartsheetClientSdk = Smartsheet.Api.SmartsheetClient;
+using SmartSheetLoader.SignalR;
+
 
 namespace SmartSheetLoader
 {
@@ -13,7 +15,7 @@ namespace SmartSheetLoader
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(builder.Configuration.GetValue<string>("SyncFusion:keyValue"));
+            //Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(builder.Configuration.GetValue<string>("SyncFusion:keyValue"));
             // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
@@ -27,6 +29,8 @@ namespace SmartSheetLoader
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", myApiSettings);
                 //client.DefaultRequestHeaders.Add("Authorization", $"Bearer {myApiSettings}");
             });
+           
+            builder.Services.AddSingleton<IMessagingMemoryAccess, MessagingMemoryAccess>();
             builder.Services.AddSingleton<SmartsheetClientSdk>(provider =>
             {
 
@@ -53,7 +57,7 @@ namespace SmartSheetLoader
 
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");
-
+            app.MapHub<CreateSignalMessage>("/messaginghub").RequireHost("localhost");
             app.Run();
         }
     }

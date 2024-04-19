@@ -24,12 +24,15 @@
         </InputSelect>
 
     </div>
-
-    <button type="submit" class="btn btn-primary" @onclick="@(() =>ProcessSubmit())">Submit</button>
+    @if (sheet != null)
+    {
+        <button type="submit" class="btn btn-primary" @onclick="@(() =>ProcessSubmit())">Submit</button>
+    }
+   
 }
 @if (sheet == null)
 {
-    <p><em>Loading...</em></p>
+   <Spinner/>
 }
 else
 {

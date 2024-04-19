@@ -8,7 +8,6 @@ using System.Text.Json;
 using Newtonsoft.Json;
 using System.Net.Security;
 using System.IO;
-using Syncfusion.Blazor.Inputs;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
 
@@ -119,12 +118,12 @@ namespace SmartSheetLoader.Pages
 
                     if (selectedOption != "**None")
                     {
-                        SSC.AddGroupingToSheet(id, selectedOption);
+                        await Task.Run(()=> SSC.AddGroupingToSheetAsync(id, selectedOption));
 
                     }
                     if (sumOption != "**None")
                     {
-                        SSC.AddSumToSheet(id, sumOption);
+                        await Task.Run(() => SSC.AddSumToSheetAsync(id, sumOption));
                     }
 
                 }
